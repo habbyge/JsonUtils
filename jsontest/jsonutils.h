@@ -1,30 +1,28 @@
 
 
 #ifndef JSON_UTILS_H
-#define	JSON_UTILS_H
+#define JSON_UTILS_H
 
 #include "rapidjson/document.h"
+#include "rapidjson/encodings.h"
+#include "rapidjson/filereadstream.h"
+#include "rapidjson/filewritestream.h"
 #include "rapidjson/istreamwrapper.h"
 #include "rapidjson/ostreamwrapper.h"
-#include "rapidjson/writer.h"
+#include "rapidjson/prettywriter.h"  // for stringify JSON
 #include "rapidjson/stringbuffer.h"
-#include "rapidjson/prettywriter.h" // for stringify JSON
-#include "rapidjson/filewritestream.h"
-#include "rapidjson/filereadstream.h"
-#include "rapidjson/encodings.h"
-
+#include "rapidjson/writer.h"
 
 using namespace rapidjson;
-//Ê¹ÓÃUTF-16µÄdoc,ÔÚrapidjsonÃüÃû¿Õ¼äÀï°üº¬UTF8µÄDocumentºÍValueµÄ¶¨Òå,µ«ÊÇ²»°üº¬UTF16µÄ
+//Ê¹ï¿½ï¿½UTF-16ï¿½ï¿½doc,ï¿½ï¿½rapidjsonï¿½ï¿½ï¿½ï¿½ï¿½Õ¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½UTF8ï¿½ï¿½Documentï¿½ï¿½Valueï¿½Ä¶ï¿½ï¿½ï¿½,ï¿½ï¿½ï¿½Ç²ï¿½ï¿½ï¿½ï¿½ï¿½UTF16ï¿½ï¿½
 typedef rapidjson::GenericDocument<rapidjson::UTF16<>> DocumentW;
 typedef rapidjson::GenericValue<rapidjson::UTF16<>> ValueW;
 typedef rapidjson::GenericStringStream<rapidjson::UTF16<>> StringStreamW;
 typedef rapidjson::GenericStringBuffer<rapidjson::UTF16<>> StringBufferW;
 
-
 /**
- * Json¶ÔÏóÀà£¬·â×°Json²Ù×÷µÄ²åÈëµÈ·½·¨
- * Ê¹ÓÃ·¶ÀýÈçÏÂ£º
+ * Jsonï¿½ï¿½ï¿½ï¿½ï¿½à£¬ï¿½ï¿½×°Jsonï¿½ï¿½ï¿½ï¿½ï¿½Ä²ï¿½ï¿½ï¿½È·ï¿½ï¿½ï¿½
+ * Ê¹ï¿½Ã·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â£ï¿½
  * CJsonUtils json;
  * json["a"] = "a";
  * json["b"] = "123";
@@ -47,312 +45,306 @@ typedef rapidjson::GenericStringBuffer<rapidjson::UTF16<>> StringBufferW;
  * int ca1 = json["child"]["a"];
  * int aa1 = json["array"][0];
  */
-class CJsonUtils
-{
-private:
-    CJsonUtils(rapidjson::Document* pDoc, rapidjson::Value* pValue);
+class CJsonUtils {
+ private:
+  CJsonUtils(rapidjson::Document* pDoc, rapidjson::Value* pValue);
 
-public:
-    CJsonUtils();
-    CJsonUtils(const CJsonUtils& other);
-    ~CJsonUtils();
+ public:
+  CJsonUtils();
+  CJsonUtils(const CJsonUtils& other);
+  ~CJsonUtils();
 
-    CJsonUtils& operator=(const CJsonUtils& Other);
+  CJsonUtils& operator=(const CJsonUtils& Other);
 
-    /**
-     * ½âÎöJsonÎÄ±¾
-     * @param strJsonText
-     * @return
-     */
-    bool Parse(const char* strJsonText);
-    bool Parse(const std::string& strJsonText);
+  /**
+   * ï¿½ï¿½ï¿½ï¿½Jsonï¿½Ä±ï¿½
+   * @param strJsonText
+   * @return
+   */
+  bool Parse(const char* strJsonText);
+  bool Parse(const std::string& strJsonText);
 
-    /**
-     * Éú³ÉJson±¾ÎÄ
-     * @return JsonÎÄ±¾×Ö·û´®
-     */
-    std::string GetJsonText(bool isPretty = false) const;
+  /**
+   * ï¿½ï¿½ï¿½ï¿½Jsonï¿½ï¿½ï¿½ï¿½
+   * @return Jsonï¿½Ä±ï¿½ï¿½Ö·ï¿½ï¿½ï¿½
+   */
+  std::string GetJsonText(bool isPretty = false) const;
 
-public:
-    /**
-     * ÅÐ¶Ïµ±Ç°´æ´¢µÄÄÚÈÝµÄÊ²Ã´ÀàÐÍ
-     * IsNumber = IsInt32|IsInt64|IsUint32|IsUint64|IsDouble
-     *
-     * @return
-     *		true	ÊÇ
-     *		false	²»ÊÇ
-     *
-     * ×¢Òâ:
-     *		1.×Ö·û´®Êý×Ö£¬ÀàÐÍÎª×Ö·û´®£¬¶ø²»ÊÇÊý×Ö£¬Òò´ËÇëÕýÈ·µÄ´æ´¢ÖµµÄÀàÐÍ
-     *		2.¶ÔÓÚÕûÐÎ¶øÑÔ£¬ÈôÖµÄÜÕýÈ·×ª»»ÎªÄ³ÖÖÀàÐÍ£¬ÔòIsType=true.ÒÔÏÂÎª¾ÙÀý:
-     *			 1:		IsInt32¡¢IsInt64¡¢IsUint32¡¢IsUint64 = true
-     *			-1:		IsInt32¡¢IsInt64   = true;
-     *					IsUint32¡¢IsUint64 = false
-     *			50ÒÚ:	IsInt64¡¢IsUint64  = true;
-     *					IsInt32¡¢ IsUint32 = false
-     */
-    bool IsObject() const;
-    bool IsString() const;
-    bool IsNumber() const;
-    bool IsStringNumber() const;
-    bool IsInt32() const;
-    bool IsInt64() const;
-    bool IsUint32() const;
-    bool IsUint64() const;
-    bool IsDouble() const;
-	bool IsBool() const;
+ public:
+  /**
+   * ï¿½Ð¶Ïµï¿½Ç°ï¿½æ´¢ï¿½ï¿½ï¿½ï¿½ï¿½Ýµï¿½Ê²Ã´ï¿½ï¿½ï¿½ï¿½
+   * IsNumber = IsInt32|IsInt64|IsUint32|IsUint64|IsDouble
+   *
+   * @return
+   *		true	ï¿½ï¿½
+   *		false	ï¿½ï¿½ï¿½ï¿½
+   *
+   * ×¢ï¿½ï¿½:
+   *		1.ï¿½Ö·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö£ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½Ö·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È·ï¿½Ä´æ´¢Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+   *		2.ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î¶ï¿½ï¿½Ô£ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½È·×ªï¿½ï¿½ÎªÄ³ï¿½ï¿½ï¿½ï¿½ï¿½Í£ï¿½ï¿½ï¿½IsType=true.ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½:
+   *			 1:		IsInt32ï¿½ï¿½IsInt64ï¿½ï¿½IsUint32ï¿½ï¿½IsUint64 =
+   *true -1:		IsInt32ï¿½ï¿½IsInt64   = true; IsUint32ï¿½ï¿½IsUint64 = false
+   *			50ï¿½ï¿½:	IsInt64ï¿½ï¿½IsUint64  = true;
+   *					IsInt32ï¿½ï¿½ IsUint32 = false
+   */
+  bool IsObject() const;
+  bool IsString() const;
+  bool IsNumber() const;
+  bool IsStringNumber() const;
+  bool IsInt32() const;
+  bool IsInt64() const;
+  bool IsUint32() const;
+  bool IsUint64() const;
+  bool IsDouble() const;
+  bool IsBool() const;
 
-    /**
-     * ÅÐ¶ÏÊÇ·ñ´æÔÚÖÆ¶¨µÄ¼üÖµ¶Ô
-     * @param[in] strKey ¼ü×Ö·û´®
-     * @return
-     */
-    bool IsExists(const char* strKey) const;
-    bool IsExists(const std::string& strKey) const;
+  /**
+   * ï¿½Ð¶ï¿½ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½Æ¶ï¿½ï¿½Ä¼ï¿½Öµï¿½ï¿½
+   * @param[in] strKey ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½
+   * @return
+   */
+  bool IsExists(const char* strKey) const;
+  bool IsExists(const std::string& strKey) const;
 
+  /**
+   * É¾ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½
+   * @param[in] strKey ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½
+   * @return
+   */
+  bool Remove(const char* strKey) const;
+  bool Remove(const std::string& strKey) const;
 
-    /**
-     * É¾³ýÖ¸¶¨¼üÖµ¶Ô
-     * @param[in] strKey ¼ü×Ö·û´®
-     * @return
-     */
-    bool Remove(const char* strKey) const;
-    bool Remove(const std::string& strKey) const;
+  /**
+   * É¾ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ôªï¿½ï¿½
+   * @param[in] iArrayIndex ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+   * @return
+   */
+  bool Remove(int32_t iArrayIndex) const;
 
-    /**
-     * É¾³ýÖ¸¶¨Êý×éÔªËØ
-     * @param[in] iArrayIndex Êý×éË÷ÒýºÅ
-     * @return
-     */
-    bool Remove(int32_t iArrayIndex) const;
+ public:
+  /**
+   * ï¿½ï¿½Öµï¿½Ô²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ãµï¿½Öµï¿½ï¿½ï¿½ï¿½
+   * @param[in] strKey ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½
+   * @return Öµï¿½ï¿½ï¿½ï¿½
+   */
+  CJsonUtils operator[](const char* strKey);
+  CJsonUtils operator[](const std::string& strKey);
+  const CJsonUtils operator[](const char* strKey) const;
+  const CJsonUtils operator[](const std::string& strKey) const;
 
-public:
-    /**
-     * ¼üÖµ¶Ô²Ù×÷£¬µÃµ½Öµ¶ÔÏó
-     * @param[in] strKey ¼ü×Ö·û´®
-     * @return Öµ¶ÔÏó
-     */
-    CJsonUtils operator[](const char* strKey);
-    CJsonUtils operator[](const std::string& strKey);
-    const CJsonUtils operator[](const char* strKey) const;
-    const CJsonUtils operator[](const std::string& strKey) const;
+  /**
+   * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ôªï¿½ØµÄ¸ï¿½ï¿½ï¿½
+   * @return
+   *		>=0	Ôªï¿½Ø¸ï¿½ï¿½ï¿½
+   *		<0	ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+   */
+  int32_t ArrayCount() const;
 
-    /**
-	 * ·µ»ØÊý×éÖÐÔªËØµÄ¸öÊý
-	 * @return
-	 *		>=0	ÔªËØ¸öÊý
-	 *		<0	²»ÊÇÊý×é
-	 */
-    int32_t ArrayCount() const;
+  /**
+   * ï¿½Ãµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¶ï¿½ï¿½ï¿½
+   * @param[in] iArrayIndex ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+   * @return Öµï¿½ï¿½ï¿½ï¿½
+   */
+  CJsonUtils operator[](int32_t iArrayIndex);
+  const CJsonUtils operator[](int32_t iArrayIndex) const;
 
-    /**
-     * µÃµ½Êý×éÖÐÖ¸¶¨Ë÷ÒýµÄ¶ÔÏó
-     * @param[in] iArrayIndex Êý×éË÷ÒýºÅ
-     * @return Öµ¶ÔÏó
-     */
-    CJsonUtils operator[](int32_t iArrayIndex);
-    const CJsonUtils operator[](int32_t iArrayIndex) const;
+ public:
+  /**
+   * ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Þ¸Ä¶ï¿½ï¿½ï¿½æ´¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+   * @param[in] ï¿½ï¿½ï¿½ï¿½Value
+   * @return ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+   */
+  CJsonUtils& operator=(const char* strValue);
+  CJsonUtils& operator=(const std::string& strValue);
+  CJsonUtils& operator=(int32_t iValue);
+  CJsonUtils& operator=(int64_t i64Value);
+  CJsonUtils& operator=(uint32_t uValue);
+  CJsonUtils& operator=(uint64_t u64Value);
+  CJsonUtils& operator=(double dValue);
+  CJsonUtils& operator=(bool bValue);
 
-public:
-    /**
-     * ¸³Öµ²Ù×÷£¬ÐÞ¸Ä¶ÔÏó´æ´¢µÄÄÚÈÝ
-     * @param[in] ¸÷ÖÖValue
-     * @return ¶ÔÏó×ÔÉíµÄÒýÓÃ
-     */
-    CJsonUtils& operator=(const char* strValue);
-    CJsonUtils& operator=(const std::string& strValue);
-    CJsonUtils& operator=(int32_t iValue);
-    CJsonUtils& operator=(int64_t i64Value);
-    CJsonUtils& operator=(uint32_t uValue);
-    CJsonUtils& operator=(uint64_t u64Value);
-    CJsonUtils& operator=(double dValue);
-	CJsonUtils& operator=(bool bValue);
+  /**
+   * ï¿½ï¿½Ê½×ªï¿½ï¿½ï¿½ï¿½È¡Öµ
+   * @return
+   *		std::string	ï¿½ï¿½ï¿½æ´¢ï¿½ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÄµÃµï¿½ï¿½Ö·ï¿½ï¿½ï¿½
+   *					ï¿½ï¿½ï¿½æ´¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½Ãµï¿½×ªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½
+   *					ï¿½ï¿½ï¿½æ´¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ãµï¿½Jsonï¿½Ä±ï¿½
+   *
+   *		int32_tï¿½ï¿½uint32_tï¿½ï¿½int64_tï¿½ï¿½uint64_tï¿½ï¿½double
+   *					ï¿½ï¿½ï¿½æ´¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ò·µ»ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½
+   *					ï¿½ï¿½ï¿½æ´¢ï¿½ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½ï¿½ï¿½Ê½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½Ô¶ï¿½×ªï¿½ï¿½Îªï¿½ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½Öµ
+   *					ï¿½ï¿½ï¿½æ´¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£ï¿½ï¿½ò·µ»ï¿½0
+   *
+   * ×¢ï¿½ï¿½:
+   *		È¡Öµï¿½ï¿½ï¿½ï¿½ï¿½Æ»ï¿½Ô­ï¿½ï¿½ï¿½Ä´æ´¢ï¿½ï¿½ï¿½Í£ï¿½ï¿½ï¿½ï¿½ï¿½:Ô­ï¿½ï¿½ï¿½æ´¢ï¿½ï¿½ "1234" -
+   *ï¿½Ö·ï¿½ï¿½ï¿½1234ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½intï¿½ï¿½È¡Öµï¿½ï¿½ ï¿½Ãµï¿½ï¿½ï¿½ï¿½ï¿½È»ï¿½ï¿½ï¿½ï¿½ï¿½Îµï¿½1234ï¿½ï¿½ï¿½ï¿½ï¿½Ç´æ´¢ï¿½ï¿½ï¿½ï¿½ï¿½Ý»ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½1234ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä±ï¿½
+   */
+  operator std::string() const;
+  operator int32_t() const;
+  operator uint32_t() const;
+  operator int64_t() const;
+  operator uint64_t() const;
+  operator double() const;
+  operator bool() const;
 
-    /**
-     * ÒþÊ½×ª»»£¬È¡Öµ
-     * @return
-     *		std::string	Èô´æ´¢µÄÊÇ×Ö·û´®£¬ÔòµÄµÃµ½×Ö·û´®
-     *					Èô´æ´¢µÄÊÇÊýÖµ£¬ÔòµÃµ½×ª»»ºóµÄ×Ö·û´®
-     *					Èô´æ´¢µÄÊÇÆäËû¶ÔÏó£¬ÔòµÃµ½JsonÎÄ±¾
-     *
-     *		int32_t¡¢uint32_t¡¢int64_t¡¢uint64_t¡¢double
-     *					Èô´æ´¢µÄÊÇÊýÖµ£¬Ôò·µ»ØÊýÖµ±¾Éí
-     *					Èô´æ´¢µÄÊÇ×Ö·û´®ÐÎÊ½µÄÊýÖµ£¬Ôò×Ô¶¯×ª»»Îª¶ÔÓ¦µÄÊýÖµ
-     *					Èô´æ´¢µÄÊÇÆäËûÀàÐÍ£¬Ôò·µ»Ø0
-     *
-     * ×¢Òâ:
-     *		È¡Öµ²»»áÆÆ»µÔ­±¾µÄ´æ´¢ÀàÐÍ£¬ÀýÈç:Ô­±¾´æ´¢µÄ "1234" - ×Ö·û´®1234£¬ÈôÓÃintÀ´È¡Öµ£¬
-     *		µÃµ½µÄËäÈ»ÊÇÕûÐÎµÄ1234£¬µ«ÊÇ´æ´¢µÄÄÚÈÝ»¹ÊÇ×Ö·û´®1234£¬²»»á¸Ä±ä
-     */
-    operator std::string() const;
-    operator int32_t() const;
-    operator uint32_t() const;
-    operator int64_t() const;
-    operator uint64_t() const;
-    operator double() const;
-	operator bool() const;
+ private:
+  template <typename _TYPE_, typename _CONVERT_FUNC_, typename _DEF_VAL>
+  _TYPE_ ConvertToNumber(_CONVERT_FUNC_ pFunc, _DEF_VAL tDefValue) const;
 
-private:
-    template<typename _TYPE_, typename _CONVERT_FUNC_, typename _DEF_VAL>
-    _TYPE_ ConvertToNumber(_CONVERT_FUNC_ pFunc, _DEF_VAL tDefValue) const;
-
-    bool                    m_bRoot;
-    rapidjson::Document*    m_pDoc;
-    rapidjson::Value*       m_pValue;
-} ;
-
-class CJsonUtilsW
-{
-private:
-	CJsonUtilsW(DocumentW* pDoc, ValueW* pValue);
-
-public:
-	CJsonUtilsW();
-	CJsonUtilsW(const CJsonUtilsW& other);
-	~CJsonUtilsW();
-
-	CJsonUtilsW& operator=(const CJsonUtilsW& Other);
-
-	/**
-	 * ½âÎöJsonÎÄ±¾
-	 * @param strJsonText
-	 * @return
-	 */
-	bool Parse(const wchar_t* strJsonText);
-	bool Parse(const std::wstring& strJsonText);
-
-	/**
-	 * Éú³ÉJson±¾ÎÄ
-	 * @return JsonÎÄ±¾×Ö·û´®
-	 */
-	std::wstring GetJsonText(bool isPretty = false) const;
-
-public:
-	/**
-	 * ÅÐ¶Ïµ±Ç°´æ´¢µÄÄÚÈÝµÄÊ²Ã´ÀàÐÍ
-	 * IsNumber = IsInt32|IsInt64|IsUint32|IsUint64|IsDouble
-	 *
-	 * @return
-	 *		true	ÊÇ
-	 *		false	²»ÊÇ
-	 *
-	 * ×¢Òâ:
-	 *		1.×Ö·û´®Êý×Ö£¬ÀàÐÍÎª×Ö·û´®£¬¶ø²»ÊÇÊý×Ö£¬Òò´ËÇëÕýÈ·µÄ´æ´¢ÖµµÄÀàÐÍ
-	 *		2.¶ÔÓÚÕûÐÎ¶øÑÔ£¬ÈôÖµÄÜÕýÈ·×ª»»ÎªÄ³ÖÖÀàÐÍ£¬ÔòIsType=true.ÒÔÏÂÎª¾ÙÀý:
-	 *			 1:		IsInt32¡¢IsInt64¡¢IsUint32¡¢IsUint64 = true
-	 *			-1:		IsInt32¡¢IsInt64   = true;
-	 *					IsUint32¡¢IsUint64 = false
-	 *			50ÒÚ:	IsInt64¡¢IsUint64  = true;
-	 *					IsInt32¡¢ IsUint32 = false
-	 */
-	bool IsObject() const;
-	bool IsString() const;
-	bool IsNumber() const;
-	bool IsStringNumber() const;
-	bool IsInt32() const;
-	bool IsInt64() const;
-	bool IsUint32() const;
-	bool IsUint64() const;
-	bool IsDouble() const;
-	bool IsBool() const;
-
-	/**
-	 * ÅÐ¶ÏÊÇ·ñ´æÔÚÖÆ¶¨µÄ¼üÖµ¶Ô
-	 * @param[in] strKey ¼ü×Ö·û´®
-	 * @return
-	 */
-	bool IsExists(const wchar_t* strKey) const;
-	bool IsExists(const std::wstring& strKey) const;
-
-	 /**
-     * É¾³ýÖ¸¶¨¼üÖµ¶Ô
-     * @param[in] strKey ¼ü×Ö·û´®
-     * @return
-     */
-    bool Remove(const wchar_t* strKey) const;
-    bool Remove(const std::wstring& strKey) const;
-
-	/**
-	 * É¾³ýÖ¸¶¨Êý×éÔªËØ
-	 * @param[in] iArrayIndex Êý×éË÷ÒýºÅ
-	 * @return
-	 */
-	bool Remove(int32_t iArrayIndex) const;
-
-public:
-	/**
-	 * ¼üÖµ¶Ô²Ù×÷£¬µÃµ½Öµ¶ÔÏó
-	 * @param[in] strKey ¼ü×Ö·û´®
-	 * @return Öµ¶ÔÏó
-	 */
-	CJsonUtilsW operator[](const wchar_t* strKey);
-	CJsonUtilsW operator[](const std::wstring& strKey);
-	const CJsonUtilsW operator[](const wchar_t* strKey) const;
-	const CJsonUtilsW operator[](const std::wstring& strKey) const;
-
-	/**
-	 * ·µ»ØÊý×éÖÐÔªËØµÄ¸öÊý
-	 * @return
-	 *		>=0	ÔªËØ¸öÊý
-	 *		<0	²»ÊÇÊý×é
-	 */
-	int32_t ArrayCount() const;
-
-	/**
-	 * µÃµ½Êý×éÖÐÖ¸¶¨Ë÷ÒýµÄ¶ÔÏó
-	 * @param[in] iArrayIndex Êý×éË÷ÒýºÅ
-	 * @return Öµ¶ÔÏó
-	 */
-	CJsonUtilsW operator[](int32_t iArrayIndex);
-	const CJsonUtilsW operator[](int32_t iArrayIndex) const;
-
-public:
-	/**
-	 * ¸³Öµ²Ù×÷£¬ÐÞ¸Ä¶ÔÏó´æ´¢µÄÄÚÈÝ
-	 * @param[in] ¸÷ÖÖValue
-	 * @return ¶ÔÏó×ÔÉíµÄÒýÓÃ
-	 */
-	CJsonUtilsW& operator=(const wchar_t* strValue);
-	CJsonUtilsW& operator=(const std::wstring& strValue);
-	CJsonUtilsW& operator=(int32_t iValue);
-	CJsonUtilsW& operator=(int64_t i64Value);
-	CJsonUtilsW& operator=(uint32_t uValue);
-	CJsonUtilsW& operator=(uint64_t u64Value);
-	CJsonUtilsW& operator=(double dValue);
-	CJsonUtilsW& operator=(bool bValue);
-
-	/**
-	 * ÒþÊ½×ª»»£¬È¡Öµ
-	 * @return
-	 *		std::string	Èô´æ´¢µÄÊÇ×Ö·û´®£¬ÔòµÄµÃµ½×Ö·û´®
-	 *					Èô´æ´¢µÄÊÇÊýÖµ£¬ÔòµÃµ½×ª»»ºóµÄ×Ö·û´®
-	 *					Èô´æ´¢µÄÊÇÆäËû¶ÔÏó£¬ÔòµÃµ½JsonÎÄ±¾
-	 *
-	 *		int32_t¡¢uint32_t¡¢int64_t¡¢uint64_t¡¢double
-	 *					Èô´æ´¢µÄÊÇÊýÖµ£¬Ôò·µ»ØÊýÖµ±¾Éí
-	 *					Èô´æ´¢µÄÊÇ×Ö·û´®ÐÎÊ½µÄÊýÖµ£¬Ôò×Ô¶¯×ª»»Îª¶ÔÓ¦µÄÊýÖµ
-	 *					Èô´æ´¢µÄÊÇÆäËûÀàÐÍ£¬Ôò·µ»Ø0
-	 *
-	 * ×¢Òâ:
-	 *		È¡Öµ²»»áÆÆ»µÔ­±¾µÄ´æ´¢ÀàÐÍ£¬ÀýÈç:Ô­±¾´æ´¢µÄ "1234" - ×Ö·û´®1234£¬ÈôÓÃintÀ´È¡Öµ£¬
-	 *		µÃµ½µÄËäÈ»ÊÇÕûÐÎµÄ1234£¬µ«ÊÇ´æ´¢µÄÄÚÈÝ»¹ÊÇ×Ö·û´®1234£¬²»»á¸Ä±ä
-	 */
-	operator std::wstring() const;
-	operator int32_t() const;
-	operator uint32_t() const;
-	operator int64_t() const;
-	operator uint64_t() const;
-	operator double() const;
-	operator bool() const;
-
-private:
-	template<typename _TYPE_, typename _CONVERT_FUNC_, typename _DEF_VAL>
-	_TYPE_ ConvertToNumber(_CONVERT_FUNC_ pFunc, _DEF_VAL tDefValue) const;
-
-	bool                    m_bRoot;
-	DocumentW*				m_pDoc;
-	ValueW*					m_pValue;
+  bool m_bRoot;
+  rapidjson::Document* m_pDoc;
+  rapidjson::Value* m_pValue;
 };
 
+class CJsonUtilsW {
+ private:
+  CJsonUtilsW(DocumentW* pDoc, ValueW* pValue);
 
-#endif //JSON_UTILS_H
+ public:
+  CJsonUtilsW();
+  CJsonUtilsW(const CJsonUtilsW& other);
+  ~CJsonUtilsW();
+
+  CJsonUtilsW& operator=(const CJsonUtilsW& Other);
+
+  /**
+   * ï¿½ï¿½ï¿½ï¿½Jsonï¿½Ä±ï¿½
+   * @param strJsonText
+   * @return
+   */
+  bool Parse(const wchar_t* strJsonText);
+  bool Parse(const std::wstring& strJsonText);
+
+  /**
+   * ï¿½ï¿½ï¿½ï¿½Jsonï¿½ï¿½ï¿½ï¿½
+   * @return Jsonï¿½Ä±ï¿½ï¿½Ö·ï¿½ï¿½ï¿½
+   */
+  std::wstring GetJsonText(bool isPretty = false) const;
+
+ public:
+  /**
+   * ï¿½Ð¶Ïµï¿½Ç°ï¿½æ´¢ï¿½ï¿½ï¿½ï¿½ï¿½Ýµï¿½Ê²Ã´ï¿½ï¿½ï¿½ï¿½
+   * IsNumber = IsInt32|IsInt64|IsUint32|IsUint64|IsDouble
+   *
+   * @return
+   *		true	ï¿½ï¿½
+   *		false	ï¿½ï¿½ï¿½ï¿½
+   *
+   * ×¢ï¿½ï¿½:
+   *		1.ï¿½Ö·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö£ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½Ö·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È·ï¿½Ä´æ´¢Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+   *		2.ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î¶ï¿½ï¿½Ô£ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½È·×ªï¿½ï¿½ÎªÄ³ï¿½ï¿½ï¿½ï¿½ï¿½Í£ï¿½ï¿½ï¿½IsType=true.ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½:
+   *			 1:		IsInt32ï¿½ï¿½IsInt64ï¿½ï¿½IsUint32ï¿½ï¿½IsUint64 =
+   *true -1:		IsInt32ï¿½ï¿½IsInt64   = true; IsUint32ï¿½ï¿½IsUint64 = false
+   *			50ï¿½ï¿½:	IsInt64ï¿½ï¿½IsUint64  = true;
+   *					IsInt32ï¿½ï¿½ IsUint32 = false
+   */
+  bool IsObject() const;
+  bool IsString() const;
+  bool IsNumber() const;
+  bool IsStringNumber() const;
+  bool IsInt32() const;
+  bool IsInt64() const;
+  bool IsUint32() const;
+  bool IsUint64() const;
+  bool IsDouble() const;
+  bool IsBool() const;
+
+  /**
+   * ï¿½Ð¶ï¿½ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½Æ¶ï¿½ï¿½Ä¼ï¿½Öµï¿½ï¿½
+   * @param[in] strKey ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½
+   * @return
+   */
+  bool IsExists(const wchar_t* strKey) const;
+  bool IsExists(const std::wstring& strKey) const;
+
+  /**
+   * É¾ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½
+   * @param[in] strKey ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½
+   * @return
+   */
+  bool Remove(const wchar_t* strKey) const;
+  bool Remove(const std::wstring& strKey) const;
+
+  /**
+   * É¾ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ôªï¿½ï¿½
+   * @param[in] iArrayIndex ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+   * @return
+   */
+  bool Remove(int32_t iArrayIndex) const;
+
+ public:
+  /**
+   * ï¿½ï¿½Öµï¿½Ô²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ãµï¿½Öµï¿½ï¿½ï¿½ï¿½
+   * @param[in] strKey ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½
+   * @return Öµï¿½ï¿½ï¿½ï¿½
+   */
+  CJsonUtilsW operator[](const wchar_t* strKey);
+  CJsonUtilsW operator[](const std::wstring& strKey);
+  const CJsonUtilsW operator[](const wchar_t* strKey) const;
+  const CJsonUtilsW operator[](const std::wstring& strKey) const;
+
+  /**
+   * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ôªï¿½ØµÄ¸ï¿½ï¿½ï¿½
+   * @return
+   *		>=0	Ôªï¿½Ø¸ï¿½ï¿½ï¿½
+   *		<0	ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+   */
+  int32_t ArrayCount() const;
+
+  /**
+   * ï¿½Ãµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¶ï¿½ï¿½ï¿½
+   * @param[in] iArrayIndex ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+   * @return Öµï¿½ï¿½ï¿½ï¿½
+   */
+  CJsonUtilsW operator[](int32_t iArrayIndex);
+  const CJsonUtilsW operator[](int32_t iArrayIndex) const;
+
+ public:
+  /**
+   * ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Þ¸Ä¶ï¿½ï¿½ï¿½æ´¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+   * @param[in] ï¿½ï¿½ï¿½ï¿½Value
+   * @return ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+   */
+  CJsonUtilsW& operator=(const wchar_t* strValue);
+  CJsonUtilsW& operator=(const std::wstring& strValue);
+  CJsonUtilsW& operator=(int32_t iValue);
+  CJsonUtilsW& operator=(int64_t i64Value);
+  CJsonUtilsW& operator=(uint32_t uValue);
+  CJsonUtilsW& operator=(uint64_t u64Value);
+  CJsonUtilsW& operator=(double dValue);
+  CJsonUtilsW& operator=(bool bValue);
+
+  /**
+   * ï¿½ï¿½Ê½×ªï¿½ï¿½ï¿½ï¿½È¡Öµ
+   * @return
+   *		std::string	ï¿½ï¿½ï¿½æ´¢ï¿½ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÄµÃµï¿½ï¿½Ö·ï¿½ï¿½ï¿½
+   *					ï¿½ï¿½ï¿½æ´¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½Ãµï¿½×ªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½
+   *					ï¿½ï¿½ï¿½æ´¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ãµï¿½Jsonï¿½Ä±ï¿½
+   *
+   *		int32_tï¿½ï¿½uint32_tï¿½ï¿½int64_tï¿½ï¿½uint64_tï¿½ï¿½double
+   *					ï¿½ï¿½ï¿½æ´¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ò·µ»ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½
+   *					ï¿½ï¿½ï¿½æ´¢ï¿½ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½ï¿½ï¿½Ê½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½Ô¶ï¿½×ªï¿½ï¿½Îªï¿½ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½Öµ
+   *					ï¿½ï¿½ï¿½æ´¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£ï¿½ï¿½ò·µ»ï¿½0
+   *
+   * ×¢ï¿½ï¿½:
+   *		È¡Öµï¿½ï¿½ï¿½ï¿½ï¿½Æ»ï¿½Ô­ï¿½ï¿½ï¿½Ä´æ´¢ï¿½ï¿½ï¿½Í£ï¿½ï¿½ï¿½ï¿½ï¿½:Ô­ï¿½ï¿½ï¿½æ´¢ï¿½ï¿½ "1234" -
+   *ï¿½Ö·ï¿½ï¿½ï¿½1234ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½intï¿½ï¿½È¡Öµï¿½ï¿½ ï¿½Ãµï¿½ï¿½ï¿½ï¿½ï¿½È»ï¿½ï¿½ï¿½ï¿½ï¿½Îµï¿½1234ï¿½ï¿½ï¿½ï¿½ï¿½Ç´æ´¢ï¿½ï¿½ï¿½ï¿½ï¿½Ý»ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½1234ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä±ï¿½
+   */
+  operator std::wstring() const;
+  operator int32_t() const;
+  operator uint32_t() const;
+  operator int64_t() const;
+  operator uint64_t() const;
+  operator double() const;
+  operator bool() const;
+
+ private:
+  template <typename _TYPE_, typename _CONVERT_FUNC_, typename _DEF_VAL>
+  _TYPE_ ConvertToNumber(_CONVERT_FUNC_ pFunc, _DEF_VAL tDefValue) const;
+
+  bool m_bRoot;
+  DocumentW* m_pDoc;
+  ValueW* m_pValue;
+};
+
+#endif  // JSON_UTILS_H
